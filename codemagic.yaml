@@ -5,17 +5,18 @@ workflows:
     instance_type: mac_mini_m2
     environment:
       groups:
-        - production # المجموعه التي أضفت فيها المتغيرات الثلاثة
+        - production
       node: latest
     scripts:
       - name: Install dependencies
         script: npm install
+      - name: Prebuild Android
+        script: |
+          # هذه الخطوة ستقوم بإنشاء مجلد android وملف gradlew المفقود
+          npx expo prebuild --platform android
       - name: Generate Keystore (Automatic)
         script: |
-          # حل مشكلة FileNotFoundException بإنشاء المجلد أولاً
           mkdir -p android/app
-          
-          # إنشاء ملف التوقيع باستخدام بياناتك
           keytool -genkeypair \
             -v -keystore android/app/shofyou.keystore \
             -alias $CM_KEY_ALIAS \
@@ -27,15 +28,15 @@ workflows:
             -dname "CN=Shofyou, OU=Development, O=Shofyou, L=City, S=State, C=US"
       - name: Build Android App (APK & AAB)
         script: |
-          # تصدير المشروع وبناء الملفات النهائية
-          npx expo export:embed
           cd android
-          ./gradlew assembleRelease # لإنتاج ملف APK
-          ./gradlew bundleRelease   # لإنتاج ملف AAB
+          # تأكد من إعطاء صلاحيات التشغيل لملف البناء
+          chmod +x gradlew
+          ./gradlew assembleRelease
+          ./gradlew bundleRelease
     artifacts:
       - android/app/build/outputs/apk/release/*.apk
       - android/app/build/outputs/bundle/release/*.aab
     publishing:
       email:
         recipients:
-          - YOUR_EMAIL@GMAIL.COM # ضع إيميلك هنا لتصلك الروابط
+          - YOUR_EMAIL@GMAIL.COM
