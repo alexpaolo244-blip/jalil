@@ -5,7 +5,7 @@ workflows:
     instance_type: mac_mini_m1
     environment:
       groups:
-        - keystore_credentials # هذا الاسم الذي وضعناه في Codemagic
+        - production # هذا الاسم الذي وضعناه في Codemagic
       node: latest
     scripts:
       - name: Install dependencies
