@@ -1,0 +1,38 @@
+workflows:
+  android-shofyou-lite:
+    name: Shofyou Lite Professional Build
+    max_build_duration: 60
+    instance_type: mac_mini_m1
+    environment:
+      groups:
+        - keystore_credentials # هذا الاسم الذي وضعناه في Codemagic
+      node: latest
+    scripts:
+      - name: Install dependencies
+        script: npm install
+      - name: Generate Keystore (Automatic)
+        script: |
+          # هذا السكريبت سيقوم بإنشاء ملف التوقيع باستخدام البيانات التي أدخلتها يدوياً
+          keytool -genkeypair \
+            -v -keystore android/app/shofyou.keystore \
+            -alias $CM_KEY_ALIAS \
+            -keyalg RSA \
+            -keysize 2048 \
+            -validity 10000 \
+            -storepass $CM_KEYSTORE_PASSWORD \
+            -keypass $CM_KEY_PASSWORD \
+            -dname "CN=Shofyou, OU=Development, O=Shofyou, L=City, S=State, C=US"
+      - name: Build Android App (APK & AAB)
+        script: |
+          # تصدير المشروع وبناء الملفات النهائية
+          npx expo export:embed
+          cd android
+          ./gradlew assembleRelease # لإنتاج ملف APK
+          ./gradlew bundleRelease   # لإنتاج ملف AAB
+    artifacts:
+      - android/app/build/outputs/apk/release/*.apk
+      - android/app/build/outputs/bundle/release/*.aab
+    publishing:
+      email:
+        recipients:
+          - YOUR_EMAIL@GMAIL.COM # لا تنسى تغيير هذا الإيميل لتصلك الروابط
